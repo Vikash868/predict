@@ -1,5 +1,5 @@
 fastapi
 uvicorn
 firebase-admin
-transformers
-torch
+transformers==4.38.2  # Pin a recent version
+torch==2.2.1+cpu      # CPU-only PyTorch

@@ -10,12 +10,12 @@ import asyncio
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Banking Prediction API", description="Text prediction and classified storage for banking")
+app = FastAPI(title="Banking Prediction API", description="Text prediction and storage for banking")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 class PromptInput(BaseModel):
     prompt: str
-    user_id: str = "anonymous"  # Default for testing, required for private data
+    user_id: str = "anonymous"
 
 @app.get("/")
 async def root():
@@ -34,8 +34,7 @@ async def root():
     except Exception as e:
         logger.error(f"Root endpoint error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-    
-    
+
 @app.post("/predict")
 async def predict(input: PromptInput):
     try:

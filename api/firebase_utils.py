@@ -12,7 +12,7 @@ db = firestore.client()
 
 async def store_classified_data(user_id, private_data, public_tokens):
     try:
-        # Store private data (unencrypted for now)
+        # Store private data (unencrypted)
         if private_data:
             user_ref = db.collection("private_users").document(user_id)
             user_ref.set(private_data, merge=True)

@@ -21,7 +21,7 @@ def predict_next_word(tokens):
         inputs = tokenizer(prompt, return_tensors="pt")
         mask_idx = inputs["input_ids"][0].tolist().index(tokenizer.mask_token_id)
         with torch.no_grad():
-            outputs = model(**inputs)
+            outputs = model(**inputs)  # No .to("cuda") since Vercel is CPU-only
             logits = outputs.logits[0, mask_idx]
             predicted_token_id = torch.argmax(logits).item()
             next_word = tokenizer.decode(predicted_token_id)

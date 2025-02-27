@@ -17,6 +17,25 @@ class PromptInput(BaseModel):
     prompt: str
     user_id: str = "anonymous"  # Default for testing, required for private data
 
+@app.get("/")
+async def root():
+    """Root endpoint for API health check and info."""
+    try:
+        message = {
+            "status": "OK",
+            "message": "Welcome to the Banking Prediction API!",
+            "endpoints": {
+                "/predict": "POST - Predict the next word for a given prompt",
+                "/store": "POST - Store a prompt with classified public and private data"
+            }
+        }
+        logger.info("Root endpoint accessed")
+        return message
+    except Exception as e:
+        logger.error(f"Root endpoint error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+    
+    
 @app.post("/predict")
 async def predict(input: PromptInput):
     try:

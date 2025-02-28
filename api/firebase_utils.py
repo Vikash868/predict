@@ -3,6 +3,7 @@ from firebase_admin import credentials, firestore
 import os
 import json
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -17,34 +18,38 @@ try:
     logger.info("Firebase initialized successfully")
 except Exception as e:
     logger.error(f"Failed to initialize Firebase: {str(e)}")
-    db = None  # Fallback to None, handled in functions
+    db = None
 
-async def store_classified_data(user_id, private_data, public_tokens):
+async def store_prompt_data(prompt):
     try:
         if not db:
             logger.warning("Firebase not initialized, skipping storage")
             return
 
-        # Store private data (unencrypted)
-        if private_data:
-            user_ref = db.collection("private_users").document(user_id)
-            user_ref.set(private_data, merge=True)
-            logger.debug(f"Stored private data for user {user_id}: {private_data}")
+        # Store full prompt with timestamp-based ID
+        prompt_id = datetime.now().isoformat().replace(":", "-")  # Avoid invalid characters
+        prompt_ref = db.collection("prompts").document(prompt_id)
+        prompt_ref.set({
+            "prompt": prompt,
+            "timestamp": firestore.SERVER_TIMESTAMP
+        })
+        logger.info(f"Stored prompt: {prompt}")
 
-        # Store public trigrams
-        if len(public_tokens) >= 3:
+        # Update trigrams for prediction
+        tokens = prompt.lower().split()
+        if len(tokens) >= 3:
             batch = db.batch()
-            for i in range(len(public_tokens) - 2):
-                key = f"{public_tokens[i]}_{public_tokens[i+1]}"
-                trigram_ref = db.collection("public_trigrams").document(key)
+            for i in range(len(tokens) - 2):
+                key = f"{tokens[i]}_{tokens[i+1]}"
+                trigram_ref = db.collection("prompts_trigrams").document(key)
                 batch.set(trigram_ref, {
-                    "first": public_tokens[i],
-                    "second": public_tokens[i+1],
-                    "third": public_tokens[i+2],
+                    "first": tokens[i],
+                    "second": tokens[i+1],
+                    "third": tokens[i+2],
                     "count": firestore.Increment(1)
                 }, merge=True)
             batch.commit()
-            logger.info(f"Stored public trigrams for tokens: {public_tokens[:5]}...")
+            logger.info(f"Stored trigrams for prompt: {prompt[:50]}...")
     except Exception as e:
         logger.error(f"Firebase store error: {str(e)}")
 
@@ -54,7 +59,7 @@ def get_trigram_suggestion(last_two_words):
             logger.warning("Firebase not initialized, returning None")
             return None
         key = f"{last_two_words[0]}_{last_two_words[1]}"
-        trigram = db.collection("public_trigrams").document(key).get()
+        trigram = db.collection("prompts_trigrams").document(key).get()
         if trigram.exists:
             return trigram.to_dict()["third"]
         return None

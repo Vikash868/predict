@@ -3,8 +3,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from .predict import predict_next_word  # Relative import
-from .firebase_utils import store_classified_data  # Relative import
-from .classify import classify_prompt  # Relative import
+from .firebase_utils import store_prompt_data  # Relative import
 import asyncio
 import os
 
@@ -17,7 +16,6 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 
 class PromptInput(BaseModel):
     prompt: str
-    user_id: str = "anonymous"
 
 @app.get("/")
 async def root():
@@ -28,7 +26,7 @@ async def root():
             "message": "Welcome to the Banking Prediction API!",
             "endpoints": {
                 "/predict": "POST - Predict the next word for a given prompt",
-                "/store": "POST - Store a prompt with classified public and private data"
+                "/store": "POST - Store a prompt in Firebase"
             },
             "firebase_configured": "FIREBASE_CREDENTIALS" in os.environ
         }
@@ -64,9 +62,8 @@ async def store(input: PromptInput):
             logger.error("Empty prompt received for storage")
             raise HTTPException(status_code=400, detail="Prompt cannot be empty")
         
-        private_data, public_tokens = classify_prompt(input.prompt)
-        asyncio.create_task(store_classified_data(input.user_id, private_data, public_tokens))
-        logger.info(f"Queued storage for prompt: {input.prompt} (user: {input.user_id})")
+        asyncio.create_task(store_prompt_data(input.prompt))
+        logger.info(f"Queued storage for prompt: {input.prompt}")
         return {"status": "stored"}
     except Exception as e:
         logger.error(f"Storage error: {str(e)}")

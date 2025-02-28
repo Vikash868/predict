@@ -6,12 +6,25 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-cred = credentials.Certificate(json.loads(os.getenv("FIREBASE_CREDENTIALS")))
-firebase_admin.initialize_app(cred)
-db = firestore.client()
+# Initialize Firebase with error handling
+try:
+    if "FIREBASE_CREDENTIALS" not in os.environ:
+        logger.error("FIREBASE_CREDENTIALS environment variable not set")
+        raise ValueError("FIREBASE_CREDENTIALS not set")
+    cred = credentials.Certificate(json.loads(os.getenv("FIREBASE_CREDENTIALS")))
+    firebase_admin.initialize_app(cred)
+    db = firestore.client()
+    logger.info("Firebase initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize Firebase: {str(e)}")
+    db = None  # Fallback to None, handled in functions
 
 async def store_classified_data(user_id, private_data, public_tokens):
     try:
+        if not db:
+            logger.warning("Firebase not initialized, skipping storage")
+            return
+
         # Store private data (unencrypted)
         if private_data:
             user_ref = db.collection("private_users").document(user_id)
@@ -37,6 +50,9 @@ async def store_classified_data(user_id, private_data, public_tokens):
 
 def get_trigram_suggestion(last_two_words):
     try:
+        if not db:
+            logger.warning("Firebase not initialized, returning None")
+            return None
         key = f"{last_two_words[0]}_{last_two_words[1]}"
         trigram = db.collection("public_trigrams").document(key).get()
         if trigram.exists:

@@ -1,4 +1,4 @@
-from firebase_utils import get_trigram_suggestion
+from .firebase_utils import get_trigram_suggestion  # Relative import
 import logging
 
 logger = logging.getLogger(__name__)
@@ -10,6 +10,7 @@ def predict_next_word(tokens):
             if trigram_suggestion:
                 logger.debug(f"Using trigram suggestion: {trigram_suggestion}")
                 return trigram_suggestion
+        logger.debug("No trigram suggestion available, using fallback")
         return "to"  # Default banking fallback
     except Exception as e:
         logger.error(f"Prediction logic error: {str(e)}")

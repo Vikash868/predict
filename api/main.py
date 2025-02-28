@@ -2,11 +2,13 @@ import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from predict import predict_next_word
-from firebase_utils import store_classified_data
-from classify import classify_prompt
+from .predict import predict_next_word  # Relative import
+from .firebase_utils import store_classified_data  # Relative import
+from .classify import classify_prompt  # Relative import
 import asyncio
+import os
 
+# Logging setup
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -27,7 +29,8 @@ async def root():
             "endpoints": {
                 "/predict": "POST - Predict the next word for a given prompt",
                 "/store": "POST - Store a prompt with classified public and private data"
-            }
+            },
+            "firebase_configured": "FIREBASE_CREDENTIALS" in os.environ
         }
         logger.info("Root endpoint accessed")
         return message

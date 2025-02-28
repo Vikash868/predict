@@ -2,7 +2,7 @@ import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from .predict import predict_next_words  # Updated function name
+from .predict import predict_next_words
 from .firebase_utils import store_prompt_data
 import asyncio
 import os
@@ -42,13 +42,13 @@ async def predict(input: PromptInput):
             raise HTTPException(status_code=400, detail="Prompt cannot be empty")
         
         tokens = input.prompt.lower().split()
-        if len(tokens) < 1:  # Relaxed to allow prediction from one word
+        if len(tokens) < 1:
             logger.warning(f"Prompt too short: {input.prompt}")
             raise HTTPException(status_code=400, detail="Prompt must have at least 1 word")
         
         next_words = predict_next_words(tokens)
         logger.info(f"Predicted next words for '{input.prompt}': {next_words}")
-        return {"next_words": next_words}  # Return array of words
+        return {"next_words": next_words}
     except Exception as e:
         logger.error(f"Prediction error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")

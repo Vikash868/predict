@@ -6,10 +6,10 @@ logger = logging.getLogger(__name__)
 def predict_next_words(tokens, max_words=3):
     try:
         if len(tokens) < 1:
-            return ["to"]  # Fallback for empty input
+            return []  # No prediction for empty input
         
         predicted = []
-        current_tokens = tokens[-2:] if len(tokens) >= 2 else tokens[:1]  # Start with last 2 or 1 word
+        current_tokens = tokens[-2:] if len(tokens) >= 2 else tokens[:1]
         
         for _ in range(max_words):
             suggestion = get_trigram_suggestion(current_tokens)
@@ -17,14 +17,14 @@ def predict_next_words(tokens, max_words=3):
                 logger.debug("No further trigram suggestion, stopping")
                 break
             predicted.append(suggestion)
-            current_tokens = current_tokens[1:] + [suggestion]  # Slide window
+            current_tokens = current_tokens[1:] + [suggestion]
             
         if not predicted:
-            logger.debug("No trigram suggestions, using fallback")
-            return ["please"]  # Smarter default for banking
+            logger.debug("No trigram suggestions available")
+            return []  # Empty array if no prediction
             
         logger.debug(f"Predicted words: {predicted}")
         return predicted
     except Exception as e:
         logger.error(f"Prediction logic error: {str(e)}")
-        return ["please"]
+        return []

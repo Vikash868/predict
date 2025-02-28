@@ -7,7 +7,6 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-# Initialize Firebase with error handling
 try:
     if "FIREBASE_CREDENTIALS" not in os.environ:
         logger.error("FIREBASE_CREDENTIALS environment variable not set")
@@ -26,8 +25,7 @@ async def store_prompt_data(prompt):
             logger.warning("Firebase not initialized, skipping storage")
             return
 
-        # Store full prompt with timestamp-based ID
-        prompt_id = datetime.now().isoformat().replace(":", "-")  # Avoid invalid characters
+        prompt_id = datetime.now().isoformat().replace(":", "-")
         prompt_ref = db.collection("prompts").document(prompt_id)
         prompt_ref.set({
             "prompt": prompt,
@@ -35,7 +33,6 @@ async def store_prompt_data(prompt):
         })
         logger.info(f"Stored prompt: {prompt}")
 
-        # Update trigrams for prediction
         tokens = prompt.lower().split()
         if len(tokens) >= 3:
             batch = db.batch()

@@ -2,12 +2,11 @@ import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from .predict import predict_next_word  # Relative import
-from .firebase_utils import store_prompt_data  # Relative import
+from .predict import predict_next_words  # Updated function name
+from .firebase_utils import store_prompt_data
 import asyncio
 import os
 
-# Logging setup
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -19,13 +18,12 @@ class PromptInput(BaseModel):
 
 @app.get("/")
 async def root():
-    """Root endpoint for API health check and info."""
     try:
         message = {
             "status": "OK",
             "message": "Welcome to the Banking Prediction API!",
             "endpoints": {
-                "/predict": "POST - Predict the next word for a given prompt",
+                "/predict": "POST - Predict the next words for a given prompt",
                 "/store": "POST - Store a prompt in Firebase"
             },
             "firebase_configured": "FIREBASE_CREDENTIALS" in os.environ
@@ -44,13 +42,13 @@ async def predict(input: PromptInput):
             raise HTTPException(status_code=400, detail="Prompt cannot be empty")
         
         tokens = input.prompt.lower().split()
-        if len(tokens) < 2:
+        if len(tokens) < 1:  # Relaxed to allow prediction from one word
             logger.warning(f"Prompt too short: {input.prompt}")
-            raise HTTPException(status_code=400, detail="Prompt must have at least 2 words")
+            raise HTTPException(status_code=400, detail="Prompt must have at least 1 word")
         
-        next_word = predict_next_word(tokens)
-        logger.info(f"Predicted next word for '{input.prompt}': {next_word}")
-        return {"next_word": next_word}
+        next_words = predict_next_words(tokens)
+        logger.info(f"Predicted next words for '{input.prompt}': {next_words}")
+        return {"next_words": next_words}  # Return array of words
     except Exception as e:
         logger.error(f"Prediction error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")

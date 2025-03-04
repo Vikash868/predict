@@ -3,7 +3,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def predict_next_words(tokens, max_words=3):
+def predict_next_words(tokens, max_words=5):
     try:
         if len(tokens) < 1:
             return []  # No prediction for empty input
